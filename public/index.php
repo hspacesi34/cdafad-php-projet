@@ -43,3 +43,8 @@ switch ($path) {
         echo "erreur 404";
         break;
 }
+
+echo $_SESSION["user"]["id"];
+echo $_SESSION["user"]["pseudo"];
+echo $_SESSION["user"]["email"];
+echo $_SESSION["user"]["roles"];
