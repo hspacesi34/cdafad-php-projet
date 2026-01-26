@@ -69,7 +69,40 @@ class RegisterController extends AbstractController
     //Méthode pour se connecter
     public function login(): mixed
     {
-        return $this->render("login", "Se connecter");
+         $data = [];
+        //Test si le formulaire est submit
+        if ($this->isFormSubmitted($_POST,  "submit")) {
+            //Test si les champs sont remplis
+            if (!empty($_POST["email"]) && !empty($_POST["password"])) {
+                //Nettoyage des données
+                Tools::sanitize_array($_POST);
+                //Test si le compte existe
+                $user = $this->userRepository->findByEmail($_POST["email"]);
+                if ($user) {
+                        if (password_verify($_POST["password"], $user->getPassword())) {
+                            $_SESSION["user"]["id"] = $user->getId();
+                            $_SESSION["user"]["pseudo"] = $user->getPseudo();
+                            $_SESSION["user"]["email"] = $user->getEmail();
+                            $_SESSION["user"]["roles"] = $user->getRoles();
+                            $_SESSION["connected"] = true;
+                            $data["msg"] = "Vous êtes bien connecté";
+                            header('Location: /');
+                            exit;
+                        } else
+                        {
+                            $data["msg"] = "Mot de passe invalide";
+                        }
+                    } else 
+                    {
+                         $data["msg"] = "Le compte n'existe pas";
+                    }
+                } 
+            //Sinon les champs ne sont pas remplis 
+            else {
+                $data["msg"] = "Veuillez remplir les champs du formulaire";
+            }
+        }
+        return $this->render("login", "Se connecter", $data);
     }
 
     //Méthode pour se connecter
