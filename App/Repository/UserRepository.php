@@ -34,7 +34,7 @@ class UserRepository extends AbstractRepository
             $req->bindValue(4, $entity->getEmail(), \PDO::PARAM_STR);
             $req->bindValue(5, $entity->getPassword(), \PDO::PARAM_STR);
             $req->bindValue(6, $entity->getRoles(), \PDO::PARAM_STR);
-            $req->bindValue(7, $entity->getCreatedAt()->format('Y-m-d'), \PDO::PARAM_STR);
+            $req->bindValue(7, $entity->getCreatedAt()->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
             //5 exécuter la requête
             $req->execute();
             //6 récupérer l'id
