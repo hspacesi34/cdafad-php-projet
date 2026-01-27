@@ -14,7 +14,19 @@ class CategoryRepository extends AbstractRepository
 
     public function findAll(): array
     {
-        return [];
+        try {
+            //2 Ecrire la requête SQL
+            $sql = "SELECT c.id, c.name FROM category AS c";
+            //3 Préparer la requête
+            $req = $this->connect->prepare($sql);
+            //5 exécuter la requête
+            $req->execute();
+            //6 récupérer la réponse (SELECT)
+            return $req->fetchAll(\PDO::FETCH_ASSOC);
+        } catch(\PDOException $e){
+            echo $e->getMessage();
+            return [];
+        }
     }
 
     public function save(Entity $entity): ?Category

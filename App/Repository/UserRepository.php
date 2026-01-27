@@ -23,8 +23,8 @@ class UserRepository extends AbstractRepository
     {
         try {
             //2 Ecrire la requête SQL
-            $sql = "INSERT INTO users(firstname, lastname, pseudo, email, `password`, roles, created_at)
-            VALUE(?,?,?,?,?,?,?)";
+            $sql = "INSERT INTO users(firstname, lastname, pseudo, email, `password`, roles, created_at, `status`, active)
+            VALUE(?,?,?,?,?,?,?,?,?)";
             //3 Préparer la requête
             $req = $this->connect->prepare($sql);
             //4 Assigner les paarmètres(bindParam)
@@ -35,6 +35,8 @@ class UserRepository extends AbstractRepository
             $req->bindValue(5, $entity->getPassword(), \PDO::PARAM_STR);
             $req->bindValue(6, $entity->getRoles(), \PDO::PARAM_STR);
             $req->bindValue(7, $entity->getCreatedAt()->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $req->bindValue(8, $entity->isStatus(), \PDO::PARAM_BOOL);
+            $req->bindValue(9, $entity->isActive(), \PDO::PARAM_BOOL);
             //5 exécuter la requête
             $req->execute();
             //6 récupérer l'id
@@ -85,11 +87,14 @@ class UserRepository extends AbstractRepository
             //5 exécuter la requête
             $req->execute();
             //6 récupérer la réponse (SELECT)
-            $req->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, User::class);
-            $user = $req->fetch();
+            //$req->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, User::class);
+            $user = $req->fetch(\PDO::FETCH_ASSOC);
+            if (!$user) {
+                return false;
+            }
         } catch(\PDOException $e){
             return false;
         }
-        return $user;
+        return (new User())->hydrate($user);
     }
 }
