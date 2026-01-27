@@ -3,18 +3,16 @@
 namespace App\Controller;
 
 use App\Controller\AbstractController;
-use App\Entity\Category;
-use App\Repository\CategoryRepository;
-use App\Utils\Tools;
+use App\Service\CategoryService;
 
 class CategoryController extends AbstractController
 {
-    private CategoryRepository $categoryRepository;
+    private CategoryService $categoryService;
 
     //Injection du UserRepository
     public function __construct()
     {
-        $this->categoryRepository = new CategoryRepository();
+        $this->categoryService = new CategoryService();
     }
 
     public function addCategory(): mixed
@@ -22,31 +20,15 @@ class CategoryController extends AbstractController
         $data = [];
         //Test si le formulaire est submit
         if ($this->isFormSubmitted($_POST,  "submit")) {
-            //Test si les champs sont remplis
-            if (!empty($_POST["name"])) {
-                //test si les 2 mots de passe sont identiques
-                    //Nettoyage des données
-                    Tools::sanitize_array($_POST);
-                    //créer un objet User
-                    $category = new Category($_POST["name"]);
-                    //Set des attributs
-                    $category
-                        ->setCreatedAt(new \DateTimeImmutable());
-                    //Test si le compte n'existe pas déja
-                    if (!$this->categoryRepository->isCategoryExists($_POST["name"])) {
-                        //ajout en BDD
-                        $this->categoryRepository->save($category);
-                        $data["msg"] = "La catégorie a été ajoutée en BDD";
-                    } else 
-                    {
-                         $data["msg"] = "La catégorie existe déjà en BDD";
-                    }
-            } 
-            //Sinon les champs ne sont pas remplis 
-            else {
-                $data["msg"] = "Veuillez remplir les champs du formulaire";
-            }
+            $data["msg"] = $this->categoryService->addCategory($_POST);
         }
         return $this->render("add-category", "Créer une catégorie", $data);
+    }
+
+    public function showAllCategories(): mixed
+    {
+        $data = [];
+        $data["categories"] = $this->categoryService->getAllCategories();
+        return $this->render("show-all-categories", "Liste des catégories", $data);
     }
 }
