@@ -18,13 +18,7 @@
             <textarea name="description" placeholder="Saisir la description du quizz"></textarea>
             <label for="categories">
                 Catégories
-                <select id="categories" name="categories[]" multiple size="5" required>
-                    <?php foreach ($data["categories"] as $category): ?>
-                        <option value="<?= htmlspecialchars($category['id']) ?>">
-                            <?= htmlspecialchars($category['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?= $data["categoryListComponent"] ?>
             </label>
             <input type="submit" value="Ajouter" name="submit">
         </form>

@@ -17,6 +17,21 @@ abstract class AbstractController
     }
 
     /**
+     * Méthode pour rendre une vue avec un component
+     * @param string $componentName Le nom du component à inclure
+     * @param array $data Les données à passer au component
+     * @return void
+     */
+    public function renderComponent(string $componentName, array $data = []): string
+    {
+        $component = PROJECT_ROOT . "/templates/components/component_" . $componentName . ".php";
+        extract($data);       // crée $title, $content, etc.
+        ob_start();           // démarre le buffer
+        require $component;    // inclut le template
+        return ob_get_clean(); // récupère le HTML
+    }
+
+    /**
      * Méthode pour envoyer une réponse JSON
      * @param array $data Les données à encoder en JSON
      * @param int $statusCode Le code de statut HTTP
@@ -27,7 +42,7 @@ abstract class AbstractController
         http_response_code($statusCode);
         echo json_encode($data, JSON_PRETTY_PRINT);
     }
-    
+
     /**
      * Méthode pour vérifier si un formulaire a été soumis
      * @param array $post Les données POST

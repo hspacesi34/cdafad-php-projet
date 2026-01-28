@@ -8,7 +8,7 @@ class Category extends Entity
 {
     private ?int $id;
     private string $name;
-    private \DateTimeImmutable|string $createdAt;
+    private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt;
 
     public function __construct(string $name)
@@ -55,7 +55,7 @@ class Category extends Entity
     /**
      * Get the value of createdAt
      */
-    public function getCreatedAt(): \DateTimeImmutable|string
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
@@ -65,7 +65,9 @@ class Category extends Entity
      */
     public function setCreatedAt(\DateTimeImmutable|string $createdAt): self
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = is_string($createdAt)
+            ? new \DateTimeImmutable($createdAt)
+            : $createdAt;
 
         return $this;
     }
@@ -81,9 +83,11 @@ class Category extends Entity
     /**
      * Set the value of updatedAt
      */
-    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): self
+    public function setUpdatedAt(\DateTimeImmutable|string|null $updatedAt): self
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = is_string($updatedAt)
+            ? new \DateTimeImmutable($updatedAt)
+            : $updatedAt;
 
         return $this;
     }

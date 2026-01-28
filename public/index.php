@@ -4,61 +4,23 @@ date_default_timezone_set('Europe/Paris');
 
 session_start();
 
-//gérer les routes
+//définir la racine du projet
+define('PROJECT_ROOT', dirname(__DIR__));
 
 include '../vendor/autoload.php';
-//Import des ressources
 
-use App\Controller\CategoryController;
+//Import des ressources
 use Dotenv\Dotenv;
 
 //Import du fichier .env
 $dotenv = Dotenv::createImmutable("../");
 $dotenv->load();
 
-//import des controllers
-use App\Controller\HomeController;
-use App\Controller\QuizzController;
-use App\Controller\RegisterController;
-
-//instancier les controllers
-$homeController = new HomeController();
-$registerController = new RegisterController();
-$categoryController = new CategoryController();
-$quizzController = new QuizzController();
-
-//Analyse de l'URL avec parse_url() et retourne ses composants
-$url = parse_url($_SERVER['REQUEST_URI']);
-//test soit l'url a une route sinon on renvoi à la racine
-$path = isset($url['path']) ? $url['path'] : '/';
-
-//Comparer avec la liste d'url :
-switch ($path) {
-    case '/':
-        $homeController->index();
-        break;
-    case '/login':
-        $registerController->login();
-        break;
-    case '/register':
-        $registerController->register();
-        break;
-    case '/logout':
-        $registerController->logout();
-        break;
-    case '/category/add':
-        $categoryController->addCategory();
-        break;
-    case '/category/all':
-        $categoryController->showAllCategories();
-        break;
-    case '/quizz/add':
-        $quizzController->addQuizz();
-        break;
-    default:
-        echo "erreur 404";
-        break;
-}
+// import librairie router
+use Mithridatem\Routing\Route;
+use Mithridatem\Routing\Router;
+use Mithridatem\Routing\Exception\RouteNotFoundException;
+use Mithridatem\Routing\Exception\UnauthorizedException;
 
 /*if (isset($_SESSION["connected"])) {
     echo $_SESSION["user"]["id"] . "<br>";
@@ -66,3 +28,24 @@ switch ($path) {
     echo $_SESSION["user"]["email"] . "<br>";
     echo $_SESSION["user"]["roles"];
 }*/
+
+$router = new Router();
+$router->map(Route::controller('GET', '/', App\Controller\HomeController::class, 'index'));
+$router->map(Route::controller('GET', '/login', App\Controller\RegisterController::class, 'login'));
+$router->map(Route::controller('POST', '/login', App\Controller\RegisterController::class, 'login'));
+$router->map(Route::controller('GET', '/register', App\Controller\RegisterController::class, 'register'));
+$router->map(Route::controller('POST', '/register', App\Controller\RegisterController::class, 'register'));
+$router->map(Route::controller('GET', '/category/add', App\Controller\CategoryController::class, 'addCategorie'));
+$router->map(Route::controller('POST', '/category/add', App\Controller\CategoryController::class, 'addCategorie'));
+$router->map(Route::controller('GET', '/category/all', App\Controller\CategoryController::class, 'showAllCategories'));
+$router->map(Route::controller('GET', '/quizz/add', App\Controller\QuizzController::class, 'addQuizz'));
+$router->map(Route::controller('GET', '/quizz/{id}', App\Controller\QuizzController::class, 'getOne'));
+$router->map(Route::controller('POST', '/quizz/add', App\Controller\QuizzController::class, 'addQuizz'));
+$router->map(Route::controller('GET', '/logout', App\Controller\RegisterController::class, 'logout'));
+try  {
+    $router->dispatch();
+} catch(RouteNotFoundException $re) {
+    echo $re->getMessage();
+} catch(UnauthorizedException $ue) {
+    echo $ue->getMessage();
+}

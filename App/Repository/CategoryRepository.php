@@ -16,17 +16,24 @@ class CategoryRepository extends AbstractRepository
     {
         try {
             //2 Ecrire la requête SQL
-            $sql = "SELECT c.id, c.name FROM category AS c";
+            $sql = "SELECT c.id, c.name FROM category AS c ORDER BY c.name";
             //3 Préparer la requête
             $req = $this->connect->prepare($sql);
             //5 exécuter la requête
             $req->execute();
             //6 récupérer la réponse (SELECT)
-            return $req->fetchAll(\PDO::FETCH_ASSOC);
-        } catch(\PDOException $e){
+            $categories = $req->fetchAll(\PDO::FETCH_ASSOC);
+            $categoriesObj = [];
+            if (count($categories) > 0) {
+                foreach ($categories as $category) {
+                    $categoriesObj[] = (new Category(""))->hydrate($category);
+                }
+            }
+        } catch (\PDOException $e) {
             echo $e->getMessage();
             return [];
         }
+        return $categoriesObj;
     }
 
     public function save(Entity $entity): ?Category
@@ -45,8 +52,7 @@ class CategoryRepository extends AbstractRepository
             //6 récupérer l'id
             $id = $this->connect->lastInsertId();
             $entity->setId($id);
-        }
-        catch(\Exception $e){
+        } catch (\Exception $e) {
             echo $e->getMessage();
         }
         return $entity;
@@ -70,9 +76,8 @@ class CategoryRepository extends AbstractRepository
             } else {
                 return true;
             }
-        } catch(\PDOException $e){
+        } catch (\PDOException $e) {
             return false;
         }
-
     }
 }
