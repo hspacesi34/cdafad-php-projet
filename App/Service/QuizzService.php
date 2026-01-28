@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\Quizz;
 use App\Entity\QuizzCategory;
+use App\Entity\User;
 use App\Repository\CategoryRepository;
 use App\Repository\QuizzCategoryRepository;
 use App\Repository\QuizzRepository;
@@ -26,8 +27,13 @@ class QuizzService
     {
         if (!empty($data["title"] || !empty($data["description"]))) {
             Tools::sanitize_array($data);
-            
-            $quizz = new Quizz($data["title"], $data["description"], $_SESSION["user"]["id"])->setCreatedAt(new \DateTimeImmutable());
+            $author = (new User())->setId($_SESSION["user"]["id"]);
+            $quizz = (new Quizz($data["title"], $data["description"], $author))->setCreatedAt(new \DateTimeImmutable());
+            //Valider l'objet
+            $msg = Tools::validator($quizz);
+            if (isset($msg)) {
+                return $msg;
+            }
             $savedQuizz = $this->quizzRepository->save($quizz);
 
             foreach($data["categories"] AS $category)
@@ -38,5 +44,10 @@ class QuizzService
             return "Quizz ajouté dans la BDD";
         }
         return "Veuillez remplir tous les champs";
+    }
+
+    public function getOne(int $id): Quizz
+    {
+        return $this->quizzRepository->find($id);
     }
 }

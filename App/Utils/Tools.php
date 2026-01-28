@@ -2,6 +2,10 @@
 
 namespace App\Utils;
 
+use App\Entity\Entity;
+use Mithridatem\Validation\Validator;
+use Mithridatem\Validation\Exception\ValidationException;
+
 class Tools
 {
     /**
@@ -52,7 +56,7 @@ class Tools
      * Méthode qui convertie une chaine de caractéres en UTF-8
      * @param string $str chaine à encoder en UTF8
      * @return string $str chaine encodée en UTF8
-    * */
+     * */
     public static function utf8Encode(string $str): string
     {
 
@@ -61,5 +65,16 @@ class Tools
             "UTF-8",
             mb_detect_encoding($str)
         );
+    }
+
+    public static function validator(Entity $entity): ?string
+    {
+        try {
+            $validator = new Validator();
+            $validator->validate($entity);
+        } catch (ValidationException $ve) {
+            return $ve->getMessage();
+        }
+        return null;
     }
 }

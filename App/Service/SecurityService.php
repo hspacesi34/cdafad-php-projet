@@ -35,7 +35,13 @@ class SecurityService
                         ->setFirstname($data["firstname"])
                         ->setLastname($data["lastname"])
                         ->setCreatedAt(new \DateTimeImmutable())
-                        ->setRoles("ROLE_USER");
+                        ->setRoles("ROLE_USER")
+                        ->setPassword($data["password"]);
+                    //Valider l'objet
+                    $msg = Tools::validator($user);
+                    if (isset($msg)) {
+                        return $msg;
+                    }
                     //Hash du passwords
                     $hash = password_hash($data["password"], PASSWORD_DEFAULT);
                     $user->setPassword($hash);

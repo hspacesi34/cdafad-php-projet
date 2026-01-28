@@ -29,6 +29,7 @@ class CategoryController extends AbstractController
     {
         $data = [];
         $data["categories"] = $this->categoryService->getAllCategories();
-        return $this->render("show-all-categories", "Liste des catégories", $data);
+        $component = $this->renderComponent("show-all-categories", $data);
+        return $component;
     }
 }

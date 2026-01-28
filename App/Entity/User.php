@@ -4,6 +4,10 @@ namespace App\Entity;
 
 use App\Entity\Media;
 use App\Entity\Entity;
+use Mithridatem\Validation\Attributes\Email;
+use Mithridatem\Validation\Attributes\Length;
+use Mithridatem\Validation\Attributes\NotBlank;
+use Mithridatem\Validation\Attributes\Pattern;
 
 class User extends Entity
 {
@@ -11,14 +15,20 @@ class User extends Entity
     private ?int $id;
     private ?string $firstname;
     private ?string $lastname;
+    #[NotBlank]
+    #[Length(2, 50)]
     private string $pseudo;
+    #[NotBlank]
+    #[Email]
     private string $email;
+    #[NotBlank]
+    #[Pattern("/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,}$/")]
     private string $password;
     private bool $status = true;
     private bool $active = true;
     private bool $deleted = false;
     private string $roles;
-    private \DateTimeImmutable|string $createdAt;
+    private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt;
     private ?\DateTimeImmutable $deletedAt;
     private ?Media $media;
@@ -136,14 +146,17 @@ class User extends Entity
         return $this;
     }
 
-    public function getCreatedAt(): \DateTimeImmutable|string
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
     public function setCreatedAt(\DateTimeImmutable|string $createdAt): self
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = is_string($createdAt)
+            ? new \DateTimeImmutable($createdAt)
+            : $createdAt;
+
         return $this;
     }
 
@@ -152,9 +165,12 @@ class User extends Entity
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeImmutable $updatedAt): self
+    public function setUpdatedAt(\DateTimeImmutable|string $updatedAt): self
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = is_string($updatedAt)
+            ? new \DateTimeImmutable($updatedAt)
+            : $updatedAt;
+
         return $this;
     }
 
@@ -163,9 +179,12 @@ class User extends Entity
         return $this->deletedAt;
     }
 
-    public function setDeletedAt(\DateTimeImmutable $deletedAt): self
+    public function setDeletedAt(\DateTimeImmutable|string $deletedAt): self
     {
-        $this->deletedAt = $deletedAt;
+        $this->deletedAt = is_string($deletedAt)
+            ? new \DateTimeImmutable($deletedAt)
+            : $deletedAt;
+
         return $this;
     }
 
