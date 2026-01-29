@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\DTO\DTO;
 use App\Entity\Entity;
 use Mithridatem\Validation\Validator;
 use Mithridatem\Validation\Exception\ValidationException;
@@ -42,6 +43,36 @@ class Tools
         }
         return $data;
     }
+
+    public static function sanitize_recursive(mixed &$data): void
+    {
+        // Si c'est une chaîne, on la nettoie directement
+        if (is_string($data)) {
+            $data = self::sanitize($data);
+            return;
+        }
+
+        // Si c'est un tableau, on nettoie chaque élément récursivement
+        if (is_array($data)) {
+            foreach ($data as $key => &$value) {
+                self::sanitize_recursive($value);
+            }
+            unset($value); // sécurité PHP pour les références
+            return;
+        }
+
+        // Si c'est un objet, on nettoie chaque propriété publique récursivement
+        if (is_object($data)) {
+            foreach (get_object_vars($data) as $prop => &$value) {
+                self::sanitize_recursive($value);
+            }
+            unset($value); // sécurité PHP
+            return;
+        }
+
+        // Sinon, rien à faire pour int, float, bool, null, resource
+    }
+
     /**
      * Méthode qui retourne l'extension d'un fichier
      * @param string $file nom du fichier
@@ -67,7 +98,7 @@ class Tools
         );
     }
 
-    public static function validator(Entity $entity): ?string
+    public static function validator(Entity|DTO $entity): ?string
     {
         try {
             $validator = new Validator();

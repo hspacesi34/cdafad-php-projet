@@ -22,16 +22,15 @@ class User extends Entity
     #[Email]
     private string $email;
     #[NotBlank]
-    #[Pattern("/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,}$/")]
     private string $password;
     private bool $status = true;
     private bool $active = true;
     private bool $deleted = false;
-    private string $roles;
+    private string $roles = "ROLE_USER";
     private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt;
     private ?\DateTimeImmutable $deletedAt;
-    private ?Media $media;
+    private ?Media $media = null;
 
     //Getters et Setters
     public function getId(): ?int
@@ -196,6 +195,33 @@ class User extends Entity
     public function setMedia(?Media $media): self
     {
         $this->media = $media;
+        return $this;
+    }
+
+    public function hydrate(array $data): self
+    {
+        foreach ($data as $key => $value) {
+            if ($key !== "media") {
+                $method = 'set' . ucfirst($key);
+                if (method_exists($this, $method)) {
+                    $this->$method($value);
+                }
+            } elseif ($key == "media") {
+                $mediaData = json_decode($value, true);
+                if (isset($mediaData["url"])) {
+                    $this->hydrateMedia($mediaData);
+                }
+            }
+        }
+        return $this;
+    }
+
+    private function hydrateMedia(array $mediaData): self
+    {
+        $this->media = new Media()
+            ->setUrl($mediaData['url'])
+            ->setAlt($mediaData['alt'])
+            ->setCreatedAt($mediaData['createdAt']);
         return $this;
     }
 }

@@ -43,4 +43,15 @@ class RegisterController extends AbstractController
         header('Location: /');
         exit;
     }
+
+    public function profil(): mixed
+    {
+        if (!isset($_SESSION['connected'])) {
+            header('Location: /');
+            exit;
+        }
+        $data = [];
+        $data["user"] = $this->securityService->getProfil();
+        return $this->render("profil", "Profil utilisateur", $data);
+    }
 }

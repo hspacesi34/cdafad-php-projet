@@ -13,18 +13,6 @@ class Media extends Entity
     private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt;
 
-    //Constructeur
-    public function __construct(
-        string $url,
-        string $alt,
-        \DateTimeImmutable $createdAt
-    )
-    {
-        $this->url = $url;
-        $this->alt = $alt;
-        $this->createdAt = $createdAt;
-    }
-
     //Getters et Setters
     public function getId():?int
     {
@@ -64,20 +52,26 @@ class Media extends Entity
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    public function setCreatedAt(\DateTimeImmutable|string $createdAt): self
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = is_string($createdAt)
+            ? new \DateTimeImmutable($createdAt)
+            : $createdAt;
+
         return $this;
     }
 
-    public function getUpdatedAt(): \DateTimeImmutable
+    public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeImmutable $updatedAt): self
+    public function setUpdatedAt(\DateTimeImmutable|string|null $updatedAt): self
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = is_string($updatedAt)
+            ? new \DateTimeImmutable($updatedAt)
+            : $updatedAt;
+
         return $this;
     }
 }
