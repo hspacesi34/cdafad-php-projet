@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\DTO\DTO;
 use App\Entity\Entity;
 use App\Entity\QuizzCategory;
 

@@ -13,13 +13,14 @@
 <body>
     <main class="container-fluid">
         <h1>Créer un quizz</h1>
-        <form action="" method="post">
+        <form action="" method="post" enctype="multipart/form-data">
             <input type="text" name="title" placeholder="Saisir le titre du quizz">
             <textarea name="description" placeholder="Saisir la description du quizz"></textarea>
             <label for="categories">
                 Catégories
                 <?= $data["categoryListComponent"] ?>
             </label>
+            <input type="file" name="img">
             <input type="submit" value="Ajouter" name="submit">
         </form>
         <p><?= $data["msg"] ?? ""  ?></p>

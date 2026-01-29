@@ -35,12 +35,14 @@ $router->map(Route::controller('GET', '/login', App\Controller\RegisterControlle
 $router->map(Route::controller('POST', '/login', App\Controller\RegisterController::class, 'login'));
 $router->map(Route::controller('GET', '/register', App\Controller\RegisterController::class, 'register'));
 $router->map(Route::controller('POST', '/register', App\Controller\RegisterController::class, 'register'));
+$router->map(Route::controller('GET', '/profil', App\Controller\RegisterController::class, 'profil'));
 $router->map(Route::controller('GET', '/category/add', App\Controller\CategoryController::class, 'addCategorie'));
 $router->map(Route::controller('POST', '/category/add', App\Controller\CategoryController::class, 'addCategorie'));
 $router->map(Route::controller('GET', '/category/all', App\Controller\CategoryController::class, 'showAllCategories'));
 $router->map(Route::controller('GET', '/quizz/add', App\Controller\QuizzController::class, 'addQuizz'));
-$router->map(Route::controller('GET', '/quizz/{id}', App\Controller\QuizzController::class, 'getOne'));
 $router->map(Route::controller('POST', '/quizz/add', App\Controller\QuizzController::class, 'addQuizz'));
+$router->map(Route::controller('GET', '/quizz/one/{id}', App\Controller\QuizzController::class, 'getOne'));
+$router->map(Route::controller('GET', '/quizz/all', App\Controller\QuizzController::class, 'getAll'));
 $router->map(Route::controller('GET', '/logout', App\Controller\RegisterController::class, 'logout'));
 try  {
     $router->dispatch();

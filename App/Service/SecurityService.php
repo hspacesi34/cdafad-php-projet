@@ -2,17 +2,23 @@
 
 namespace App\Service;
 
+use App\DTO\UserLoginDTO;
+use App\DTO\UserRegisterDTO;
+use App\Entity\Media;
 use App\Repository\UserRepository;
 use App\Utils\Tools;
 use App\Entity\User;
+use App\Mapper\UserMapper;
 
 class SecurityService
 {
     private UserRepository $userRepository;
+    private MediaService $mediaService;
 
     public function __construct()
     {
         $this->userRepository = new UserRepository();
+        $this->mediaService = new MediaService();
     }
 
     public function register(array $data): string
@@ -27,16 +33,33 @@ class SecurityService
                 //Test si le compte n'existe pas déja
                 if (!$this->userRepository->isUserExists($data["email"], $data["pseudo"])) {
                     //créer un objet User
-                    $user = new User();
-                    //Set des attributs
-                    $user
-                        ->setEmail($data["email"])
-                        ->setPseudo($data["pseudo"])
-                        ->setFirstname($data["firstname"])
-                        ->setLastname($data["lastname"])
-                        ->setCreatedAt(new \DateTimeImmutable())
-                        ->setRoles("ROLE_USER")
-                        ->setPassword($data["password"]);
+                    $media = !empty($data["mediaId"])
+                        ? $data["mediaId"]
+                        : null;
+                    $userRegisterDto = new UserRegisterDTO(
+                        firstname: $data["firstname"],
+                        lastname: $data["lastname"],
+                        pseudo: $data["pseudo"],
+                        email: $data["email"],
+                        password: $data["password"],
+                        createdAt: new \DateTimeImmutable()
+                    );
+                    $user = UserMapper::toUserDTO($userRegisterDto);
+                    //test si le media existe
+                    if (isset($_FILES["img"]) && !empty($_FILES["img"]["tmp_name"])) {
+                        try {
+                            //Import du fichier
+                            $media = $this->mediaService->addMedia($_FILES["img"]);
+                        } catch (\Exception $e) {
+                            echo $e->getMessage();
+                        }
+                    }
+                    //Image par default
+                    else {
+                        $media = $this->mediaService->getDefaultImg();
+                    }
+
+                    $user->setMedia($media);
                     //Valider l'objet
                     $msg = Tools::validator($user);
                     if (isset($msg)) {
@@ -68,16 +91,31 @@ class SecurityService
     {
         //Test si les champs sont remplis
         if (!empty($data["email"]) && !empty($data["password"])) {
+            $userLoginDTO = new UserLoginDTO($data["email"], $data["password"]);
             //Nettoyage des données
-            Tools::sanitize_array($data);
+            Tools::sanitize_recursive($userLoginDTO);
+            //Valider l'objet
+            $msg = Tools::validator($userLoginDTO);
+            if (isset($msg)) {
+                return $msg;
+            }
             //Test si le compte existe
-            $user = $this->userRepository->findByEmail($data["email"]);
+            $user = $this->userRepository->findByEmail($userLoginDTO->email);
             if ($user) {
-                if (password_verify($data["password"], $user->getPassword())) {
-                    $_SESSION["user"]["id"] = $user->getId();
-                    $_SESSION["user"]["pseudo"] = $user->getPseudo();
-                    $_SESSION["user"]["email"] = $user->getEmail();
-                    $_SESSION["user"]["roles"] = $user->getRoles();
+                if (password_verify($userLoginDTO->password, $user->getPassword())) {
+                    $_SESSION['user'] = [
+                        'firstname' => $user->getFirstname(),
+                        'lastname' => $user->getLastname(),
+                        'roles' => $user->getRoles(),
+                        'email' => $user->getEmail(),
+                        'pseudo' => $user->getPseudo()
+                    ];
+                    if ($user->getMedia() !== null) {
+                        $_SESSION['user']['media'] = [
+                            "url" => $user->getMedia()->getUrl(),
+                            "alt" => $user->getMedia()->getAlt()
+                        ];
+                    }
                     $_SESSION["connected"] = true;
                     header('Location: /');
                     exit;
@@ -92,5 +130,18 @@ class SecurityService
         else {
             return "Veuillez remplir les champs du formulaire";
         }
+    }
+
+    public function getProfil(): User
+    {
+        $user = (new User())
+            ->setFirstname($_SESSION["user"]["firstname"])
+            ->setLastname($_SESSION["user"]["lastname"])
+            ->setEmail($_SESSION["user"]["email"])
+            ->setPseudo($_SESSION["user"]["pseudo"]);
+        if (isset($_SESSION["user"]["media"])) {
+            $user->setMedia(new Media()->setUrl($_SESSION["user"]["media"]["url"])->setAlt($_SESSION["user"]["media"]["alt"]));
+        }
+        return $user;
     }
 }

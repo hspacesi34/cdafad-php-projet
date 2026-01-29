@@ -31,8 +31,19 @@ class QuizzController extends AbstractController
 
     public function getOne(int $id): mixed
     {
+        if (!isset($_SESSION['connected'])) {
+            header('Location: /');
+            exit;
+        }
         $data = [];
         $data["quizz"] = $this->quizzService->getOne($id);
-        return dump($data);
+        return $this->render("show-quizz", "Affichage d'un Quizz", $data);
+    }
+
+    public function getAll(): mixed
+    {
+        $data = [];
+        $data["listQuizz"] = $this->quizzService->getAll();
+        return $this->render("show-all-quizz", "Affichage des Quizz", $data);
     }
 }

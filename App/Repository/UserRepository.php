@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\DTO\DTO;
 use App\Repository\AbstractRepository;
 use App\Entity\Entity;
 use App\Entity\User;
@@ -23,8 +24,8 @@ class UserRepository extends AbstractRepository
     {
         try {
             //2 Ecrire la requête SQL
-            $sql = "INSERT INTO users(firstname, lastname, pseudo, email, `password`, roles, created_at, `status`, active)
-            VALUE(?,?,?,?,?,?,?,?,?)";
+            $sql = "INSERT INTO users(firstname, lastname, pseudo, email, `password`, roles, created_at, `status`, active, media_id)
+            VALUE(?,?,?,?,?,?,?,?,?,?)";
             //3 Préparer la requête
             $req = $this->connect->prepare($sql);
             //4 Assigner les paarmètres(bindParam)
@@ -37,6 +38,7 @@ class UserRepository extends AbstractRepository
             $req->bindValue(7, $entity->getCreatedAt()->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
             $req->bindValue(8, $entity->isStatus(), \PDO::PARAM_BOOL);
             $req->bindValue(9, $entity->isActive(), \PDO::PARAM_BOOL);
+            $req->bindValue(10, $entity->getMedia()->getId(), \PDO::PARAM_INT);
             //5 exécuter la requête
             $req->execute();
             //6 récupérer l'id
@@ -78,8 +80,17 @@ class UserRepository extends AbstractRepository
     {
         try {
             //2 Ecrire la requête SQL
-            $sql = "SELECT u.id, u.firstname, u.lastname, u.email, u.pseudo, u.password, u.roles, u.created_at AS createdAt 
-            FROM users AS u WHERE u.email = ?";
+            $sql = "SELECT u.id, u.firstname, u.lastname, u.email, u.pseudo, u.password, u.roles, u.created_at AS createdAt,
+            JSON_OBJECT(
+                'id', m.id,
+                'url', m.url,
+                'alt', m.alt,
+                'createdAt', m.created_at,
+                'updatedAt', m.updated_at
+            ) AS media 
+            FROM users AS u
+            LEFT JOIN media AS m ON u.media_id = m.id
+            WHERE u.email = ?";
             //3 Préparer la requête
             $req = $this->connect->prepare($sql);
             //4 Assigner les paarmètres(bindParam)

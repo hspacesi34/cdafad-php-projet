@@ -2,11 +2,9 @@
 
 namespace App\Repository;
 
-use App\Entity\Category;
+use App\DTO\QuizzViewListDTO;
 use App\Entity\Entity;
 use App\Entity\Quizz;
-use App\Entity\QuizzCategory;
-use App\Entity\User;
 
 class QuizzRepository extends AbstractRepository
 {
@@ -22,10 +20,23 @@ class QuizzRepository extends AbstractRepository
                     'createdAt', c.created_at,
                     'updatedAt', c.updated_at
                 )
-            ) AS categories
+            ) AS categories,
+            JSON_OBJECT(
+                'id', u.id,
+                'pseudo', u.pseudo
+            ) AS author,
+            JSON_OBJECT(
+                'id', m.id,
+                'url', m.url,
+                'alt', m.alt,
+                'createdAt', m.created_at,
+                'updatedAt', m.updated_at
+            ) AS media
             FROM quizz AS q
             INNER JOIN quizz_category AS qc ON q.id = qc.quizz_id
             INNER JOIN category AS c ON qc.category_id = c.id
+            INNER JOIN users AS u ON q.author_id = u.id
+            LEFT JOIN media AS m ON q.media_id = m.id
             WHERE q.id = ?";
             //3 Préparer la requête
             $req = $this->connect->prepare($sql);
@@ -40,25 +51,40 @@ class QuizzRepository extends AbstractRepository
         } catch (\Exception $e) {
             echo $e->getMessage();
         }
-        $newQuizz = (new Quizz("", "", new User()))->hydrate($entity);
-        foreach (json_decode($entity['categories'], true) as $category) {
-            $newCategory = (new Category($category["name"]))->setId($category["id"])->setCreatedAt($category["createdAt"])->setUpdatedAt($category["updatedAt"]);
-            $newQuizz->addCategory($newCategory);
-        }
-        return $newQuizz;
+        $quizz = (new Quizz())->hydrate($entity);
+        return $quizz;
     }
 
     public function findAll(): array
     {
-        return [];
+        try {
+            //2 Ecrire la requête SQL
+            $sql = "SELECT q.id, q.title, q.description, q.created_at AS createdAt
+            FROM quizz AS q";
+            //3 Préparer la requête
+            $req = $this->connect->prepare($sql);
+            //5 exécuter la requête
+            $req->execute();
+            $entity = $req->fetchAll(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, QuizzViewListDTO::class);
+            foreach($entity AS $quizz)
+                {
+                    $quizz->setCorrectDateType();
+                }
+            if (!$entity) {
+                return null;
+            }
+        } catch (\Exception $e) {
+            echo $e->getMessage();
+        }
+        return $entity;
     }
 
     public function save(Entity $entity): ?Quizz
     {
         try {
             //2 Ecrire la requête SQL
-            $sql = "INSERT INTO quizz(title, `description`, created_at, author_id)
-            VALUE(?,?,?,?)";
+            $sql = "INSERT INTO quizz(title, `description`, created_at, author_id, media_id)
+            VALUE(?,?,?,?,?)";
             //3 Préparer la requête
             $req = $this->connect->prepare($sql);
             //4 Assigner les paarmètres(bindParam)
@@ -66,6 +92,7 @@ class QuizzRepository extends AbstractRepository
             $req->bindValue(2, $entity->getDescription(), \PDO::PARAM_STR);
             $req->bindValue(3, $entity->getCreatedAt()->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
             $req->bindValue(4, $entity->getAuthor()->getId(), \PDO::PARAM_INT);
+            $req->bindValue(5, $entity->getMedia()->getId(), \PDO::PARAM_INT);
             //5 exécuter la requête
             $req->execute();
             //6 récupérer l'id

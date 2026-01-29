@@ -18,15 +18,13 @@ class Quizz extends Entity
     private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt;
     private User $author;
-    private ?int $mediaId;
+    private ?Media $media;
     private array $categories;
 
-    public function __construct(string $title, string $description, User $author)
+    public function __construct()
     {
-        $this->title = $title;
-        $this->description = $description;
         $this->categories = [];
-        $this->author = $author;
+        $this->media = null;
     }
 
     /**
@@ -165,26 +163,69 @@ class Quizz extends Entity
         return $this;
     }
 
-    public function hydrateCategories(array $data): self
+    public function getMedia(): ?Media
     {
-        if (!isset($data['category_id'], $data['category_name'])) {
-            return $this;
-        }
+        return $this->media;
+    }
 
-        // Éviter les doublons
-        foreach ($this->categories as $category) {
-            if ($category->getId() === (int) $data['category_id']) {
-                return $this;
+    public function setMedia(?Media $media): self
+    {
+        $this->media = $media;
+
+        return $this;
+    }
+
+    public function hydrate(array $data): self
+    {
+        foreach ($data as $key => $value) {
+            if ($key !== "categories" && $key !== "author" && $key !== "media") {
+                $method = 'set' . ucfirst($key);
+                if (method_exists($this, $method)) {
+                    $this->$method($value);
+                }
+            } elseif ($key == "categories") {
+                $categoriesData = json_decode($value, true);
+                $this->hydrateCategories($categoriesData);
+            } elseif ($key == "author") {
+                $authorData = json_decode($value, true);
+                $this->hydrateAuthor($authorData);
+            } elseif ($key == "media") {
+                $mediaData = json_decode($value, true);
+                if (isset($mediaData["url"])) {
+                    $this->hydrateMedia($mediaData);
+                }
             }
         }
+        return $this;
+    }
 
-        $category = (new Category($data['category_name']))
-            ->setId((int) $data['category_id'])
-            ->setCreatedAt($data['category_createdAt'])
-            ->setUpdatedAt($data['category_updatedAt']);
+    private function hydrateCategories(array $categoriesData): self
+    {
+        foreach ($categoriesData as $category) {
+            $this->addCategory(
+                (new Category($category['name']))
+                    ->setId($category['id'])
+                    ->setCreatedAt($category['createdAt'])
+                    ->setUpdatedAt($category['updatedAt'])
+            );
+        }
+        return $this;
+    }
 
-        $this->categories[] = $category;
+    private function hydrateAuthor(array $authorData): self
+    {
+        $this->author = (new User())
+            ->setId($authorData['id'])
+            ->setPseudo($authorData['pseudo']);
+        return $this;
+    }
 
+    private function hydrateMedia(array $mediaData): self
+    {
+        $this->media = new Media()
+            ->setUrl($mediaData['url'])
+            ->setAlt($mediaData['alt'])
+            ->setCreatedAt($mediaData['createdAt']);
         return $this;
     }
 }
